@@ -122,8 +122,9 @@ class CoalitionValueFunction:
         from pruning import apply_node_mask
         from models import normalize_adjacency
 
-        # Create node mask: keep only coalition nodes
-        node_mask = torch.zeros(self.data.num_nodes, dtype=torch.bool)
+        # Create node mask on the same device as the graph
+        device = self.data.edge_index.device
+        node_mask = torch.zeros(self.data.num_nodes, dtype=torch.bool, device=device)
         node_mask[coalition] = True
 
         # Apply node mask
@@ -149,8 +150,9 @@ class CoalitionValueFunction:
         from pruning import apply_edge_mask
         from models import normalize_adjacency
 
-        # Create edge mask
-        edge_mask = torch.zeros(self.data.edge_index.size(1), dtype=torch.bool)
+        # Create edge mask on the same device as the graph
+        device = self.data.edge_index.device
+        edge_mask = torch.zeros(self.data.edge_index.size(1), dtype=torch.bool, device=device)
         edge_mask[coalition] = True
 
         # Apply edge mask

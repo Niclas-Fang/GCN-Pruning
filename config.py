@@ -131,6 +131,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--dataset', type=str, default='Cora',
                        choices=['Cora', 'CiteSeer', 'PubMed'],
                        help='Dataset name')
+    parser.add_argument('--data_dir', type=str, default='data/',
+                       help='Directory containing the PyG dataset cache')
     
     # Model
     parser.add_argument('--model', type=str, default='GCN',

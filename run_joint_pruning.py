@@ -312,6 +312,7 @@ class JointPruningRunner:
         Returns:
             Boolean mask
         """
+        scores = scores.to(self.device)
         num_units = scores.size(0)
         num_keep = int(num_units * keep_ratio)
 
@@ -322,7 +323,7 @@ class JointPruningRunner:
         _, top_indices = torch.topk(scores, num_keep)
 
         # Create mask on the same device as the graph
-        mask = torch.zeros(num_units, dtype=torch.bool)
+        mask = torch.zeros(num_units, dtype=torch.bool, device=self.device)
         mask[top_indices] = True
 
         return mask
@@ -355,7 +356,7 @@ class JointPruningRunner:
             layer_order = []
             
             for layer_name in sorted(scores.keys()):
-                all_scores.append(scores[layer_name])
+                all_scores.append(scores[layer_name].to(self.device))
                 layer_sizes.append(scores[layer_name].size(0))
                 layer_order.append(layer_name)
 
@@ -370,7 +371,7 @@ class JointPruningRunner:
             _, top_indices = torch.topk(all_scores, num_keep)
             
             # Distribute back to layers
-            global_mask = torch.zeros(num_total, dtype=torch.bool)
+            global_mask = torch.zeros(num_total, dtype=torch.bool, device=self.device)
             global_mask[top_indices] = True
             
             offset = 0
@@ -382,6 +383,7 @@ class JointPruningRunner:
         elif strategy == 'layerwise':
             # Keep top-k% per layer
             for layer_name, layer_scores in scores.items():
+                layer_scores = layer_scores.to(self.device)
                 num_channels = layer_scores.size(0)
                 num_keep = int(num_channels * keep_ratio)
                 if num_keep == 0:
@@ -389,7 +391,7 @@ class JointPruningRunner:
 
                 _, top_indices = torch.topk(layer_scores, num_keep)
 
-                mask = torch.zeros(num_channels)
+                mask = torch.zeros(num_channels, device=self.device)
                 mask[top_indices] = 1.0
                 
                 masks[layer_name] = mask

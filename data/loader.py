@@ -100,8 +100,68 @@ from torch_geometric.datasets import Planetoid
 
 from torch_geometric.datasets import Planetoid
 
-def load_cora(data_dir: str='data/'):
-    dataset = Planetoid(root=str(Path(data_dir)/'pyg'), name='Cora')
+# Canonical names understood by PyG's Planetoid loader.
+_SUPPORTED_DATASETS = {
+    'cora': 'Cora',
+    'citeseer': 'CiteSeer',
+    'pubmed': 'PubMed',
+}
+
+# Standard public split statistics (Planetoid).
+_DATASET_INFO = {
+    'cora': {
+        'num_nodes': 2708,
+        'num_features': 1433,
+        'num_classes': 7,
+        'train_size': 140,
+        'val_size': 500,
+        'test_size': 1000,
+    },
+    'citeseer': {
+        'num_nodes': 3327,
+        'num_features': 3703,
+        'num_classes': 6,
+        'train_size': 120,
+        'val_size': 500,
+        'test_size': 1000,
+    },
+    'pubmed': {
+        'num_nodes': 19717,
+        'num_features': 500,
+        'num_classes': 3,
+        'train_size': 60,
+        'val_size': 500,
+        'test_size': 1000,
+    },
+}
+
+
+def _canonical_name(name: str) -> str:
+    """Map a user-provided dataset name to PyG's canonical Planetoid name."""
+    key = name.lower()
+    if key not in _SUPPORTED_DATASETS:
+        supported = ', '.join(sorted(_SUPPORTED_DATASETS.values()))
+        raise ValueError(f"Dataset {name} not supported. Use one of: {supported}.")
+    return _SUPPORTED_DATASETS[key]
+
+
+def load_planetoid(name: str, data_dir: str = 'data/'):
+    """
+    Load a Planetoid dataset (Cora/CiteSeer/PubMed) through PyTorch Geometric.
+
+    Raw Planetoid files are looked up under ``{data_dir}/pyg/Planetoid/{name}/raw``.
+    If they are absent, PyG downloads them from
+    https://github.com/kimiyoung/planetoid automatically.
+
+    Args:
+        name: Dataset name ('Cora', 'CiteSeer', 'PubMed'), case-insensitive.
+        data_dir: Directory that holds the PyG dataset cache.
+
+    Returns:
+        x, edge_index, y, train_mask, val_mask, test_mask
+    """
+    canonical = _canonical_name(name)
+    dataset = Planetoid(root=str(Path(data_dir) / 'pyg'), name=canonical)
     d = dataset[0]
 
     x = d.x.float()
@@ -112,6 +172,11 @@ def load_cora(data_dir: str='data/'):
     test_mask = d.test_mask.bool()
 
     return x, edge_index, y, train_mask, val_mask, test_mask
+
+
+def load_cora(data_dir: str = 'data/'):
+    """Backwards-compatible Cora loader."""
+    return load_planetoid('Cora', data_dir)
 
 
 def load_dataset(name: str, data_dir: str = 'data/'):
@@ -127,10 +192,7 @@ def load_dataset(name: str, data_dir: str = 'data/'):
     """
     from models import GraphData
 
-    if name.lower() == 'cora':
-        x, edge_index, y, train_mask, val_mask, test_mask = load_cora(data_dir)
-    else:
-        raise ValueError(f"Dataset {name} not supported. Use 'Cora'.")
+    x, edge_index, y, train_mask, val_mask, test_mask = load_planetoid(name, data_dir)
 
     data = GraphData(
         x=x,
@@ -146,14 +208,8 @@ def load_dataset(name: str, data_dir: str = 'data/'):
 
 def get_dataset_info(name: str):
     """Get dataset statistics."""
-    if name.lower() == 'cora':
-        return {
-            'num_nodes': 2708,
-            'num_features': 1433,
-            'num_classes': 7,
-            'train_size': 140,
-            'val_size': 500,
-            'test_size': 1000
-        }
-    else:
-        raise ValueError(f"Dataset {name} not supported")
+    key = name.lower()
+    if key not in _DATASET_INFO:
+        supported = ', '.join(sorted(_SUPPORTED_DATASETS.values()))
+        raise ValueError(f"Dataset {name} not supported. Use one of: {supported}.")
+    return dict(_DATASET_INFO[key])
