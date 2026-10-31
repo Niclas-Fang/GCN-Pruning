@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+
+# Experiment artifacts
+outputs/
+*.tar.gz
+*.pth
+*.pt
+*.pkl
+*.npy
+*.csv
+*.log
+
+# Data caches (raw data lives in /home/niclas/shapley/{CiteSeer,PubMed})
+data/pyg/
+data/*/processed/
+
+# Scratch / external mounts
+mnt/
+
+# Generated figures / fonts
+*.png
+*.pdf
+*.ttf
+fonts/
